@@ -194,22 +194,18 @@ async function fetchAllPatients(): Promise<Patient[]> {
     // Handle inconsistent "data" formats
     const data = Array.isArray(resp.data) ? resp.data : [];
     // Filter to objects that look like patients
+    if (data.length === 0) break; // 🔑 stop only when no data
+
     for (const item of data) {
       if (item && typeof item === "object" && "patient_id" in (item as any)) {
         all.push(item as Patient);
       }
     }
 
-    const hasNext = resp.pagination?.hasNext;
-    if (hasNext === false) break;
-
-    // If pagination missing, fallback: stop when page returns no data
-    if (hasNext === undefined && data.length === 0) break;
-
     page += 1;
 
     // Small pacing to reduce 429 risk (still okay with retries)
-    await sleep(80);
+    await sleep(120);
   }
 
   return all;
@@ -242,7 +238,17 @@ async function submitAssessment(body: SubmissionBody) {
 }
 
 // -----------------------------
-// Main
+// Debugging function
+// -----------------------------
+// async function main() {
+//     console.log("Fetching patients...");
+//     const patients = await fetchAllPatients();
+//     console.log(`Fetched ${patients.length} patients.`);
+//     console.log("Sample patient:", patients[0]);
+//   }
+
+// -----------------------------
+// Main function
 // -----------------------------
 async function main() {
   console.log("Fetching patients...");
